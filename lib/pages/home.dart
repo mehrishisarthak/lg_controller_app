@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lg_controller_app/pages/settings.dart';
 import 'package:lg_controller_app/services/datamethods.dart';
-
-// FIX 1: Fixed the typo (comma changed to dot)
+import 'package:lg_controller_app/services/providers/connection_provider.dart';
 import 'package:lg_controller_app/services/providers/theme_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -17,12 +17,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // This watches the global provider from theme_provider.dart
     final themeState = ref.watch(themeProvider);
-    
+    final connectionState = ref.watch(connectionProvider);
     final primaryColor = Theme.of(context).primaryColor;
     final bgColor = themeState.isDark ? const Color(0xFF1E1E1E) : Colors.white;
-
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -42,8 +40,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           IconButton(
             onPressed: () {
-              // This toggles the global state
-              ref.read(themeProvider).toggleTheme();
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => const Settings(),
+              ));
             },
             color: primaryColor,
             iconSize: 30,
@@ -63,7 +62,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // --- ROW 1: Logo Controls ---
+            
+            Container(
+  width: double.infinity, // Takes full width for better alignment
+  padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+  decoration: BoxDecoration(
+    color: connectionState.isConnectedStatus() ? Color.fromARGB(50, 0, 255, 0) : Color.fromARGB(50, 255, 0, 0),
+    borderRadius: BorderRadius.circular(12.0),
+    border: Border.all(
+      color: primaryColor.withAlpha((0.2 * 255).toInt()),
+      width: 1.0,
+    ),
+  ),
+  child: Row(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: primaryColor.withAlpha((0.1 * 255).toInt()),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.wifi,
+          color: primaryColor,
+          size: 20,
+        ),
+      ),
+      const SizedBox(width: 16),
+      
+      // 4. Organize text with hierarchy (Label vs Value)
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CONNECTION STATUS',
+            style: GoogleFonts.poppins(
+              color: primaryColor.withAlpha((0.6 * 255).toInt()),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            connectionState.displayIp(),
+            style: GoogleFonts.poppins(
+              color: primaryColor,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    ],
+  ),
+),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -82,7 +136,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
             
-            // --- ROW 2: KML Controls ---
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -101,7 +154,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
             
-            // --- ROW 3: Navigation ---
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
