@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lg_controller_app/services/datamethods.dart';
+import 'package:lg_controller_app/services/providers/connection_provider.dart';
 import 'package:lg_controller_app/services/providers/theme_provider.dart';
 
 class Settings extends ConsumerStatefulWidget {
@@ -19,6 +21,7 @@ class _SettingsState extends ConsumerState<Settings> {
 
   final _formKey = GlobalKey<FormState>();
   bool _isConnecting = false;
+
 
   @override
   void initState() {
@@ -44,13 +47,42 @@ class _SettingsState extends ConsumerState<Settings> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isConnecting = true);
 
-      await Future.delayed(const Duration(seconds: 2));
+      String result = await Datamethods().connect(
+        ip: _ipController.text,
+        port: int.parse(_portController.text),
+        username: _usernameController.text,
+        password: _passwordController.text,
+      );
 
       if (mounted) {
         setState(() => _isConnecting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Configuration Saved')),
-        );
+
+        if (result == "Success") {
+          ref.read(connectionProvider.notifier).setConnected(
+                true,
+                _ipController.text,
+                _usernameController.text,
+                _passwordController.text,
+                int.parse(_portController.text),
+                int.parse(_screensController.text),
+              );
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Connected to Liquid Galaxy!'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     }
   }
