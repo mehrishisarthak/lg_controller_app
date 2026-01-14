@@ -25,6 +25,10 @@ class ConnectionState {
     return isConnected;
   }
 
+  int getScreens() {
+    return screens;
+  }
+
 
   ConnectionState copyWith({
     bool? isConnected,

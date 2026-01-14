@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lg_controller_app/constants.dart';
 import 'package:lg_controller_app/pages/settings.dart';
 import 'package:lg_controller_app/services/datamethods.dart';
 import 'package:lg_controller_app/services/providers/connection_provider.dart';
@@ -14,13 +15,13 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-
   @override
   Widget build(BuildContext context) {
     final themeState = ref.watch(themeProvider);
     final connectionState = ref.watch(connectionProvider);
     final primaryColor = Theme.of(context).primaryColor;
     final bgColor = themeState.isDark ? const Color(0xFF1E1E1E) : Colors.white;
+
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -63,110 +64,189 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             
+            // Connection Status Card
             Container(
-  width: double.infinity, // Takes full width for better alignment
-  padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-  decoration: BoxDecoration(
-    color: connectionState.isConnectedStatus() ? Color.fromARGB(50, 0, 255, 0) : Color.fromARGB(50, 255, 0, 0),
-    borderRadius: BorderRadius.circular(12.0),
-    border: Border.all(
-      color: primaryColor.withAlpha((0.2 * 255).toInt()),
-      width: 1.0,
-    ),
-  ),
-  child: Row(
-    children: [
-      Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: primaryColor.withAlpha((0.1 * 255).toInt()),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          Icons.wifi,
-          color: primaryColor,
-          size: 20,
-        ),
-      ),
-      const SizedBox(width: 16),
-      
-      // 4. Organize text with hierarchy (Label vs Value)
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'CONNECTION STATUS',
-            style: GoogleFonts.poppins(
-              color: primaryColor.withAlpha((0.6 * 255).toInt()),
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+              decoration: BoxDecoration(
+                color: connectionState.isConnectedStatus()
+                    ? const Color.fromARGB(50, 0, 255, 0)
+                    : const Color.fromARGB(50, 255, 0, 0),
+                borderRadius: BorderRadius.circular(12.0),
+                border: Border.all(
+                  color: primaryColor.withAlpha((0.2 * 255).toInt()),
+                  width: 1.0,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withAlpha((0.1 * 255).toInt()),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.wifi,
+                      color: primaryColor,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CONNECTION STATUS',
+                        style: GoogleFonts.poppins(
+                          color: primaryColor.withAlpha((0.6 * 255).toInt()),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        connectionState.displayIp(),
+                        style: GoogleFonts.poppins(
+                          color: primaryColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            connectionState.displayIp(),
-            style: GoogleFonts.poppins(
-              color: primaryColor,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    ],
-  ),
-),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 SimpleMenuTile(
-                  label: "SHOW LOGO", 
-                  icon: Icons.tv, 
+                  label: "SHOW LOGO",
+                  icon: Icons.tv,
                   bgColor: bgColor,
-                  onTap: () {Datamethods().sendLogo();},
+                  onTap: () async {
+                    if (connectionState.isConnectedStatus()) {
+                      bool result = await Datamethods()
+                          .sendLogo(ref.read(connectionProvider).getScreens());
+                      if (result) {
+                        showSnackbar('Logo sent successfully!', false);
+                      } else {
+                        showSnackbar('Failed to send Logo', true);
+                      }
+                    } else {
+                      ref.read(connectionProvider.notifier).disconnect();
+                      showSnackbar('Not connected to Liquid Galaxy.', true);
+                    }
+                  },
                 ),
                 SimpleMenuTile(
-                  label: "CLEAN LOGO", 
-                  icon: Icons.tv_off, 
+                  label: "CLEAN LOGO",
+                  icon: Icons.tv_off,
                   bgColor: bgColor,
-                  onTap: () {Datamethods().cleanLogos();},
+                  onTap: () async {
+                    if (connectionState.isConnectedStatus()) {
+                      bool result = await Datamethods()
+                          .cleanLogos(ref.read(connectionProvider).getScreens());
+                      if (result) {
+                        showSnackbar('Logo cleaned successfully!', false);
+                      } else {
+                        showSnackbar('Failed to clean Logo', true);
+                      }
+                    } else {
+                      ref.read(connectionProvider.notifier).disconnect();
+                      showSnackbar('Not connected to Liquid Galaxy.', true);
+                    }
+                  },
                 ),
               ],
             ),
-            
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 SimpleMenuTile(
-                  label: "3D PYRAMID", 
-                  icon: Icons.change_history, 
+                  label: "3D PYRAMID",
+                  icon: Icons.change_history,
                   bgColor: bgColor,
-                  onTap: () {Datamethods().sendPyramid();},
+                  onTap: () async {
+                    if (connectionState.isConnectedStatus()) {
+                      bool result = await Datamethods().sendPyramid(pyramidCoordinates,100);
+                      if (result) {
+                        showSnackbar('Pyramid sent successfully!', false);
+                      } else {
+                        showSnackbar('Failed to send Pyramid', true);
+                      }
+                    } else {
+                      ref.read(connectionProvider.notifier).disconnect();
+                      showSnackbar(
+                          'Not connected to Liquid Galaxy. Please connect first.',
+                          true);
+                    }
+                  },
                 ),
                 SimpleMenuTile(
-                  label: "CLEAN KML", 
-                  icon: Icons.clear_all, 
+                  label: "CLEAN KML",
+                  icon: Icons.clear_all,
                   bgColor: bgColor,
-                  onTap: () {Datamethods().cleanKMLs();},
+                  onTap: () async {
+                    if (connectionState.isConnectedStatus()) {
+                      bool result = await Datamethods().cleanKMLs();
+                      if (result) {
+                        showSnackbar('KMLs cleaned successfully!', false);
+                      } else {
+                        showSnackbar('Failed to clean KMLs', true);
+                      }
+                    } else {
+                      ref.read(connectionProvider.notifier).disconnect();
+                      showSnackbar('Not connected to Liquid Galaxy.', true);
+                    }
+                  },
                 ),
               ],
             ),
-            
+
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SimpleMenuTile(
-                  label: "FLY HOME", 
-                  icon: Icons.flight_takeoff, 
+                  label: "FLY HOME",
+                  icon: Icons.flight_takeoff,
                   bgColor: bgColor,
-                  onTap: (){Datamethods().flyHome();},
+                  onTap: () async {
+                    if (connectionState.isConnectedStatus()) {
+                      bool result = await Datamethods().flyToNITA(
+                        coordinates
+                      );
+                      if (result) {
+                        showSnackbar('Flying to NIT Agartala...', false);
+                      } else {
+                        showSnackbar('Failed to fly to NIT Agartala', true);
+                      }
+                    } else {
+                      ref.read(connectionProvider.notifier).disconnect();
+                      showSnackbar('Not connected to Liquid Galaxy.', true);
+                    }
+                  },
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void showSnackbar(String message, bool isError) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.poppins(),
+        ),
+        backgroundColor: isError ? Colors.red : Colors.green,
       ),
     );
   }
