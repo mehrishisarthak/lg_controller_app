@@ -212,7 +212,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SimpleMenuTile(
-                  label: "FLY HOME",
+                  label: "FLY TO NIT AGARTALA",
                   icon: Icons.flight_takeoff,
                   bgColor: bgColor,
                   onTap: () async {
